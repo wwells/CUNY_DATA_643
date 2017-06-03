@@ -1,0 +1,123 @@
+---
+title: "DATA 643 Prep: Chapter 2, Data Mining Techniques"
+output:
+  html_document:
+    theme: lumen
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Text
+
+Building a Recommendation System with R
+by Suresh K. Gorakala (Author), Michele Usuelli (Author) 
+https://www.amazon.com/dp/B012O8S1YM/ref=dp-kindle-redirect?_encoding=UTF8&btkr=1
+
+# PCA
+
+```{r}
+data("USArrests")
+head(USArrests)
+apply(USArrests, 2, var)
+pca = prcomp(USArrests, scale=T)
+pca
+
+## reverse directions (results in mirror image)
+pca$x = -pca$x
+pca$rotation = -pca$rotation
+biplot(pca, scale=0)
+```
+
+# K-means
+
+```{r}
+library(cluster)
+library(ggplot2)
+data("iris")
+iris$Species = as.numeric(iris$Species)
+
+kmeans <- kmeans(x=iris, centers = 3)
+clusplot(iris, kmeans$cluster, color=T, shade=T, labels = 13, lines = 0)
+
+## evaluate using elbow method
+cost_df <- data.frame()
+for (i in 1:20) {
+    kmeans <- kmeans(x=iris, centers = i, iter.max = 50)
+    cost_df <- rbind(cost_df, cbind(i, kmeans$tot.withinss))
+}
+names(cost_df) <- c("cluster", "cost")
+ggplot(data=cost_df, aes(x=cluster, y=cost, group=1)) + theme_bw() + 
+    geom_line(colour = "darkgreen") + theme(text = element_text(size=20)) + 
+    ggtitle("Reduction in Cost for Values of 'k'\n") + xlab("\nClusters") + 
+    ylab("Within-Cluster Sum of Squares\n")
+```
+
+# SVM
+
+```{r}
+library(e1071)
+data("iris")
+sample <- iris[sample(nrow(iris)),]
+train <- sample[1:105, ]
+test <- sample[106:150, ]
+tune <- tune(svm, Species ~., data = train, kernel = "radial", 
+             scale = F, ranges = list(cost = c(0.001, 0.01, 0.1, 1, 5, 10, 100)))
+tune$best.model
+summary(tune)
+
+### run n times to confirm
+cost_df <- data.frame()
+for (i in 1:10) {
+    sample <- iris[sample(nrow(iris)),]
+    train <- sample[1:105, ]
+    tune <- tune(svm, Species ~., data = train, kernel = "radial", 
+             scale = F, ranges = list(cost = c(0.001, 0.01, 0.1, 1, 5, 10, 100)))
+    cost_df <- rbind(cost_df, tune$best.model$cost)
+}
+
+myTab <- table(cost_df)
+myTab
+bestcost <- as.numeric(names(myTab)[which.max(myTab)])
+
+### we see from summary
+model <- svm(Species ~ ., data=train, kernel = "radial", cost = bestcost, scale = F)
+pred <- predict(model, test)
+```
+
+# Decision Trees
+
+```{r}
+library(tree)
+data("iris")
+sample <- iris[sample(nrow(iris)),]
+train <- sample[1:105, ]
+test <- sample[106:150, ]
+model <- tree(Species ~ ., train)
+summary(model)
+plot(model); text(model)
+pred <- predict(model, test[,-5], type = "class")
+```
+
+# Boosting
+
+```{r, message=FALSE}
+library(gbm)
+data("iris")
+sample <- iris[sample(nrow(iris)),]
+train <- sample[1:105, ]
+test <- sample[106:150, ]
+model <- gbm(Species ~., data=train, distribution = "multinomial", 
+             n.trees=5000, interaction.depth =4)
+summary(model)
+
+### prediction
+pred <- predict(model, newdata=test[,-5], n.trees=5000)
+pred[1:5, ,]
+
+### get prediction with highest probability
+p.pred <- apply(pred, 1, which.max)
+p.pred
+```

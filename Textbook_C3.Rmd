@@ -1,0 +1,77 @@
+---
+title: "DATA 643 Prep: Chapter 3, Data Mining Techniques"
+output:
+  html_document:
+    theme: lumen
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Text
+
+Building a Recommendation System with R
+by Suresh K. Gorakala (Author), Michele Usuelli (Author) 
+https://www.amazon.com/dp/B012O8S1YM/ref=dp-kindle-redirect?_encoding=UTF8&btkr=1
+
+# The Recommender Lab Package
+
+```{r, message=FALSE}
+library(recommenderlab)
+library(ggplot2)
+data_package <- data(package = "recommenderlab")
+data_package$results[,'Item']
+```
+
+## Datasets
+
+```{r}
+data("MovieLense")
+MovieLense
+class(MovieLense)
+methods(class = class(MovieLense))
+```
+
+## Object Storage
+
+```{r}
+object.size(MovieLense) #since sparse matrix, more efficient way to store
+object.size(as(MovieLense, "matrix"))
+object.size(as(MovieLense, "matrix")) / object.size(MovieLense) #how much smaller?
+```
+
+## Similarity Matrix
+
+```{r}
+similarity_users <- similarity(MovieLense[1:5,], method="cosine", which="users")
+as.matrix(similarity_users)
+image(as.matrix(similarity_users), main="User similarity")
+similarity_items <- similarity(MovieLense[, 1:5], method="cosine", which="items")
+as.matrix(similarity_items)
+image(as.matrix(similarity_items), main="Item similarity")
+```
+
+## Recommendation Models
+
+```{r}
+recommender_models <- recommenderRegistry$get_entries(dataType = "realRatingMatrix")
+names(recommender_models)
+lapply(recommender_models, "[[", "description")
+recommender_models$IBCF_realRatingMatrix$parameters
+```
+
+# Data Exploration
+
+```{r}
+dim(MovieLense) # users, movies
+slotNames(MovieLense)
+class(MovieLense@data)
+```
+
+## Exploring the values of the rating
+
+```{r}
+
+```
