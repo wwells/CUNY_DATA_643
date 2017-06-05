@@ -73,5 +73,52 @@ class(MovieLense@data)
 ## Exploring the values of the rating
 
 ```{r}
-
+vector_ratings <- as.vector(MovieLense@data)
+unique(vector_ratings)
+vector_ratings <- factor(vector_ratings[vector_ratings != 0])
+table_ratings <- table(vector_ratings)
+table_ratings
+qplot(vector_ratings) + ggtitle("Distribution of Ratings")
 ```
+
+## Exploring which movies have been viewed
+
+```{r}
+views_per_movie <- colCounts(MovieLense)
+table_views <- data.frame(
+    movie = names(views_per_movie),
+    views = views_per_movie
+)
+table_views <- table_views[order(table_views$views, decreasing=T),]
+ggplot(table_views[1:6, ], aes(x = movie, y = views)) + 
+    geom_bar(stat="identity") + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+    ggtitle("Number of Views of the Top Movies")
+```
+
+## Exploring the average ratings
+
+```{r, message=F, warning=F}
+average_ratings <- colMeans(MovieLense)
+qplot(average_ratings) + stat_bin(binwidth = 0.1) + 
+    ggtitle("Distribution of the Avg Movie Rating")
+average_ratings_relevant <- average_ratings[views_per_movie > 100]
+qplot(average_ratings_relevant) + stat_bin(binwidth = 0.1) + 
+    ggtitle("Distribution of the Relevant Avg Movie Rating")
+```
+
+## Visualizing the Matrix
+
+```{r}
+image(MovieLense, main="Heatmap of the Rating Matrix")
+image(MovieLense[1:10, 1:15], main="Heatmap of the first rows and columns")
+
+## get most relevant users (seen most movies / most seen movies)
+min_n_movies <- quantile(rowCounts(MovieLense), 0.99)
+min_n_users <- quantile(colCounts(MovieLense), 0.99)
+image(MovieLense[rowCounts(MovieLense) > min_n_movies, 
+                 colCounts(MovieLense) > min_n_users], 
+      main="Heatmap of the top users and movies")
+```
+
+# Data Preparation
