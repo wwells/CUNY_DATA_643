@@ -122,3 +122,35 @@ image(MovieLense[rowCounts(MovieLense) > min_n_movies,
 ```
 
 # Data Preparation
+
+## Select Most Relevant Data
+
+```{r}
+ratings_movies <- MovieLense[rowCounts(MovieLense) > 50, colCounts(MovieLense) > 100]
+ratings_movies
+```
+
+## Explore Most Relevant Data
+
+```{r}
+# top 2%
+min_movies <- quantile(rowCounts(ratings_movies), 0.98)
+min_users <- quantile(colCounts(ratings_movies), 0.98)
+image(ratings_movies[rowCounts(ratings_movies) > min_movies, 
+                 colCounts(ratings_movies) > min_users], 
+      main="Heatmap of the top users and movies")
+
+average_ratings_per_user <- rowMeans(ratings_movies)
+qplot(average_ratings_per_user) + stat_bin(binwidth = 0.1) + 
+    ggtitle("Distribution of the Avg Rating Per User")
+```
+
+## Normalizing the Data
+
+```{r}
+ratings_movies_norm <- normalize(ratings_movies)
+sum(rowMeans(ratings_movies_norm) > 0.00001)
+image(ratings_movies_norm[rowCounts(ratings_movies_norm) > min_movies, 
+                 colCounts(ratings_movies_norm) > min_users], 
+      main="Heatmap of the top users and movies")
+```
