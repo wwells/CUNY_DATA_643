@@ -154,3 +154,56 @@ image(ratings_movies_norm[rowCounts(ratings_movies_norm) > min_movies,
                  colCounts(ratings_movies_norm) > min_users], 
       main="Heatmap of the top users and movies")
 ```
+
+## Binarizing the Data
+
+```{r}
+ratings_movies_watched <- binarize(ratings_movies, minRating=1)
+min_movies_binary <- quantile(rowCounts(ratings_movies), 0.95)
+min_users_binary <- quantile(colCounts(ratings_movies), 0.95)
+image(ratings_movies_watched[rowCounts(ratings_movies) > min_movies_binary, 
+                             colCounts(ratings_movies) > min_users_binary], 
+      main = "Heatmap of the top users and movies")
+ratings_movies_good <- binarize(ratings_movies, minRating=3)
+image(ratings_movies_good[rowCounts(ratings_movies) > min_movies_binary, 
+                             colCounts(ratings_movies) > min_users_binary], 
+      main = "Heatmap of the top users and movies, rating > 3")
+```
+
+# Item based Collaborative Filtering
+
+## Define training and test 
+
+```{r}
+which_train <- sample(x = c(TRUE, FALSE), size = nrow(ratings_movies), 
+                      replace = TRUE, prob = c(0.8, 0.2))
+recc_data_train <- ratings_movies[which_train, ]
+recc_data_test <- ratings_movies[-which_train, ]
+```
+
+## Building the Recommendation Model
+
+```{r}
+recc_model <- Recommender(data = recc_data_train, 
+                          method = "IBCF", 
+                          parameter = list(k = 30))
+recc_model
+```
+
+## Exploring the Recommender Model
+
+```{r}
+model_details <- getModel(recc_model)
+model_details$description
+model_details$k
+class(model_details$sim)
+n_items_top <- 20
+image(model_details$sim[1:n_items_top, 1:n_items_top], main = "Heatmap of First rows and columns")
+model_details$k
+row_sums <- rowSums(model_details$sim > 0)
+table(row_sums)
+col_sums <- colSums(model_details$sim > 0)
+qplot(col_sums) + stat_bin(binwidth=1) + ggtitle("Distribution of the Column Count")
+which_max <- order(col_sums, decreasing=TRUE)[1:6]
+rownames(model_details$sim)[which_max]
+```

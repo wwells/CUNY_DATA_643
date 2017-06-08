@@ -1,0 +1,159 @@
+---
+title: "DATA 643: Recommender Systems"
+author: "Walt Wells, Summer 2017"
+subtitle: "Project 1"
+output:
+  html_document:
+    css: ../custom.css
+    highlight: zenburn
+    theme: lumen
+---
+
+## Overview 
+
+* Briefly describe the recommender system that you’re going to build out from a business perspective, e.g. “This system recommends data science books to readers.”
+
+__We'll just generate some toy data at this stage to learn the concepts behind building a system.   Our toy data will match User_[i] with Item_[j] based on a 1 to 5 rating system.__
+
+## Data Prep
+
+* Find a dataset, or build out your own toy dataset. As a minimum requirement for complexity, please include numeric ratings for at least five users, across at least five items, with some missing data.
+* Load your data into (for example) an R or pandas dataframe, a Python dictionary or list of lists, (or another data structure of your choosing).  From there, create a user-item matrix. 
+
+```{r}
+# randomly create a toy square matrix with n users and items, ranking 1 to 5
+# in the code below, n cannot be > 27 because english alphabet ;)
+
+# set simulation vars
+set.seed(643)
+n <- 15
+percentNAs <- .3
+probs <- c(1-percentNAs, percentNAs)
+users <- paste("User_", LETTERS[1:n], sep="")
+items <- paste("Item_", LETTERS[1:n], sep="")
+
+# generate data
+toyDF <- as.data.frame(replicate(n, floor(runif(n, 1,6))))
+ 
+# add NAs via: https://stackoverflow.com/questions/27454265/r-randomly-insert-nas-into-dataframe-proportionaly
+toyDF <- as.data.frame(
+    lapply(toyDF, function(df) df[sample(c(TRUE, NA), prob = probs, size = length(df), replace = TRUE) ]), 
+    row.names = users, 
+    col.names = items)
+
+knitr::kable(toyDF)
+```
+
+## Data Visualization
+
+```{r}
+heatmap(as.matrix(toyDF), Rowv=NA, Colv=NA, col = heat.colors(256))
+```
+
+## Separate Data 
+
+* If you choose to work with a large dataset, you’re encouraged to also create a small, relatively dense “user-item” matrix as a subset so that you can hand-verify your calculations. 
+* Break your ratings into separate training and test datasets
+
+```{r}
+train_index <- sample(n, size = floor(2/3 * n), replace=F)
+train <- toyDF[train_index, ]
+test <- toyDF[-train_index, ]
+```
+
+## Calculations
+
+* Using your training data, calculate the raw average (mean) rating for every user-item combination
+
+```{r}
+train_raw_avg <- mean(as.matrix(train), na.rm=TRUE)
+train_raw_avg
+```
+
+* Calculate the RMSE for raw average for both your training data and your test data.
+
+```{r}
+RMSE <- function(observed, predicted) {
+    # get RMSE
+    sqrt(mean((observed - predicted)^2, na.rm=TRUE))
+}
+
+trainRMSE <- RMSE(as.matrix(train), train_raw_avg)
+trainRMSE
+testRMSE <- RMSE(as.matrix(test), train_raw_avg)
+testRMSE
+```
+
+* Using your training data, calculate the bias for each user and each item.
+
+```{r}
+user_bias_train <- rowMeans(as.matrix(train), na.rm = T) - train_raw_avg
+user_bias_test <- rowMeans(as.matrix(test), na.rm = T) - train_raw_avg
+item_bias_train <- colMeans(as.matrix(train), na.rm = T) - train_raw_avg
+user_bias_train
+user_bias_test
+item_bias_train
+```
+
+* From the raw average, and the appropriate user and item biases, calculate the baseline predictors for every user-item combination. 
+
+```{r}
+baseline_predictor <- function(rawAvg, userBias, itemBias) {
+    # calculates predictions based on rawaverage and user and item bias calcs
+    userlist <- names(userBias)
+    itemlist <- names(itemBias)
+    df <- data.frame()
+    
+    for (i in userBias) {
+        UserPred <- rawAvg + i + itemBias
+        df <- rbind(df, UserPred)
+    }
+    
+    # make sure we don't exceed our max and min values
+    df[df > 5] <- 5
+    df[df < 1] <- 1
+    
+    row.names(df) <- userlist
+    names(df) <- itemlist
+    df
+}
+
+trainPredictions <- baseline_predictor(train_raw_avg, user_bias_train, item_bias_train)
+heatmap(as.matrix(trainPredictions), Rowv=NA, Colv=NA, scale = 'none', col = heat.colors(256))
+knitr::kable(trainPredictions)
+testPredictions <- baseline_predictor(train_raw_avg, user_bias_test, item_bias_train)
+knitr::kable(testPredictions)
+```
+
+* Calculate the RMSE for the baseline predictors for both your training data and your test data. 
+
+```{r}
+trainPredictionRSME <- RMSE(as.matrix(trainPredictions), train_raw_avg)
+trainPredictionRSME
+testPredictionRSME <- RMSE(as.matrix(testPredictions), train_raw_avg)
+testPredictionRSME
+```
+
+## Summary
+* Summarize your results. 
+
+```{r}
+trainVec <- c(trainRMSE,
+              trainPredictionRSME,
+              (1-trainPredictionRSME/trainRMSE)*100)
+testVec <- c(testRMSE, 
+             testPredictionRSME, 
+             (1-testPredictionRSME/testRMSE)*100)
+summary <- data.frame(trainVec, testVec)
+names(summary) <- c("train", "test")
+row.names(summary) <- c("Raw Average RMSE", 
+                       "Simple Predictor RMSE", 
+                       "Percent Improvement")
+knitr::kable(summary)
+```
+
+# References
+
+* https://www.youtube.com/playlist?list=PLuKhJYywjDe96T2L0-zXFU5Up2jqXlWI9
+* https://stackoverflow.com/questions/27454265/r-randomly-insert-nas-into-dataframe-proportionaly
+* [Building a Recommendation System with Rby Suresh K. Gorakala, Michele Usuelli](https://www.amazon.com/dp/B012O8S1YM/ref=dp-kindle-redirect?_encoding=UTF8&btkr=1)
