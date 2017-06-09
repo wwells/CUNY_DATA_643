@@ -5,7 +5,6 @@
 import numpy as np
 import pandas as pd
 import random
-from sklearn.metrics import mean_squared_error
 
 #set vars
 np.random.seed(643)
