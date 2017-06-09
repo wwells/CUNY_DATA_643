@@ -207,3 +207,32 @@ qplot(col_sums) + stat_bin(binwidth=1) + ggtitle("Distribution of the Column Cou
 which_max <- order(col_sums, decreasing=TRUE)[1:6]
 rownames(model_details$sim)[which_max]
 ```
+
+## Applying the model
+
+```{r}
+n_recommended <- 6
+recc_predicted <- predict(object = recc_model, newdata = recc_data_test, n = n_recommended)
+recc_predicted
+slotNames(recc_predicted)
+
+## extract rec for user
+recc_user_1 <- recc_predicted@items[[1]]
+movies_user_1 <- recc_predicted@itemLabels[recc_user_1]
+movies_user_1
+
+## matrix w/ recc
+recc_matrix <- sapply(recc_predicted@items, function(x){colnames(ratings_movies)[x]})
+dim(recc_matrix)
+recc_matrix[, 1:4]
+
+# dist
+number_of_items <- factor(table(recc_matrix))
+qplot(number_of_items) + ggtitle("Distribution of the number of items for IBCF")
+
+# which movies are recc most
+number_of_items_sorted <- sort(number_of_items, decreasing = T)
+number_of_items_top <- head(number_of_items_sorted, n = 4)
+table_top <- data.frame(names(number_of_items_top), number_of_items_top)
+table_top
+```
