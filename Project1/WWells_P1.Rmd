@@ -34,12 +34,20 @@ items <- paste("Item_", LETTERS[1:n], sep="")
 
 # generate data
 toyDF <- as.data.frame(replicate(n, floor(runif(n, 1,6))))
+
+## Test introducing item bias (see summary)
+#toyDF[,1:3] <- toyDF[,1:3] + 1
+#toyDF[,4:6] <- toyDF[,4:6] - 1
+#toyDF[toyDF > 5] <- 5
+#toyDF[toyDF < 1] <- 1
  
 # add NAs via: https://stackoverflow.com/questions/27454265/r-randomly-insert-nas-into-dataframe-proportionaly
 toyDF <- as.data.frame(
     lapply(toyDF, function(df) df[sample(c(TRUE, NA), prob = probs, size = length(df), replace = TRUE) ]), 
     row.names = users, 
     col.names = items)
+
+
 
 knitr::kable(toyDF)
 ```
@@ -128,9 +136,9 @@ knitr::kable(testPredictions)
 * Calculate the RMSE for the baseline predictors for both your training data and your test data. 
 
 ```{r}
-trainPredictionRSME <- RMSE(as.matrix(trainPredictions), train_raw_avg)
+trainPredictionRSME <- RMSE(as.matrix(train), as.matrix(trainPredictions))
 trainPredictionRSME
-testPredictionRSME <- RMSE(as.matrix(testPredictions), train_raw_avg)
+testPredictionRSME <- RMSE(as.matrix(test), as.matrix(testPredictions))
 testPredictionRSME
 ```
 
@@ -151,6 +159,12 @@ row.names(summary) <- c("Raw Average RMSE",
                        "Percent Improvement")
 knitr::kable(summary)
 ```
+
+Our percent improvement actually decreased over the test data, while improving over the training data. If I am intepreting this correctly, this is because we used randomly generated data so there are no obviously inherent biases in the test set - thus the training biases for items applied to the test data did not improve performance.   But we can see that since these biases are fit to the training data, they did actually improve the RMSE in the training set. 
+
+I attempted to introduce some simple item bias to the the randomly generated data by manually increasing and decreasing the average ratings (see lines #38-42 commented out in the first code block).   When this bias was introduced, and the rest of the code run, we can see slight improvements in the test RMSE.   
+
+Similarly, with more data (obtained by increasing "n" or decreasing matrix sparseness via the "percentNA" variable), we also see improvements in our predictor's performance.
 
 # References
 

@@ -45,8 +45,8 @@ train_pred_df = pd.DataFrame(np.array(train_prediction).reshape(len(train), 15))
 test_prediction = [x + y + train_raw_avg for x in user_bias_test for y in item_bias_train]
 test_pred_df = pd.DataFrame(np.array(test_prediction).reshape(len(test), 15))
 
-trainPredRMSE = ((train_pred_df.stack() - train_raw_avg) ** 2).mean() ** .5
-testPredRMSE = ((test_pred_df.stack() - train_raw_avg) ** 2).mean() ** .5
+trainPredRMSE = ((train_raw_avg - train_pred_df.stack()) ** 2).mean() ** .5
+testPredRMSE = ((train_raw_avg - test_pred_df.stack()) ** 2).mean() ** .5
 
 #Summary
 dict = [(trainRMSE, trainPredRMSE, (1-trainPredRMSE/trainRMSE)*100),
