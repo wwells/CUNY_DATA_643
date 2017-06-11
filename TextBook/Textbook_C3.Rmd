@@ -242,8 +242,26 @@ table_top
 ```{r}
 ratings_movies_watched <- binarize(ratings_movies, minRating=1)
 qplot(rowSums(ratings_movies_watched)) + stat_bin(binwidth = 10) + geom_vline(xintercept = mean(rowSums(ratings_movies_watched)), col="red", linetype ="dashed") + ggtitle("Dist of Movies by User")
-
-which_train <- sample(x)
 ```
 
 ## Item-based collaborative filtering on binary data
+
+```{r}
+recc_model <- Recommender(data = recc_data_train, method="IBCF", parameter=list(method="Jaccard")) #cosine sim or pearson ineffective on binary, just used jaccard
+model_details <- getModel(recc_model)
+n_recommended <- 6
+recc_predicted <- predict(object = recc_model, newdata = recc_data_test, n=n_recommended)
+recc_matrix <- sapply(recc_predicted@items, function(x){colnames(ratings_movies)[x]})
+recc_matrix[,1:4]
+```
+
+## User-based Collaborative filtering on binary data
+
+```{r}
+recc_model <- Recommender(data = recc_data_train, method="UBCF", parameter=list(method="Jaccard"))
+model_details <- getModel(recc_model)
+n_recommended <- 6
+recc_predicted <- predict(object = recc_model, newdata = recc_data_test, n=n_recommended)
+recc_matrix <- sapply(recc_predicted@items, function(x){colnames(ratings_movies)[x]})
+recc_matrix[,1:4]
+```
