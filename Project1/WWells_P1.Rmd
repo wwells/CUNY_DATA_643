@@ -47,8 +47,6 @@ toyDF <- as.data.frame(
     row.names = users, 
     col.names = items)
 
-
-
 knitr::kable(toyDF)
 ```
 
@@ -64,9 +62,14 @@ heatmap(as.matrix(toyDF), Rowv=NA, Colv=NA, col = heat.colors(256))
 * Break your ratings into separate training and test datasets
 
 ```{r}
-train_index <- sample(n, size = floor(2/3 * n), replace=F)
-train <- toyDF[train_index, ]
-test <- toyDF[-train_index, ]
+# THIS IS WRONG - Out of time to find an elegant solution to sample for RecSys
+# so that train and test have the same dimensions AND ensure proper distribution 
+# eg - userA only rates 1 movie, make sure it ends up in 'train'.   Look forward 
+# to seeing how others have solved this.
+
+train_row <- sample(n, size = floor(2/3 * n), replace=F)
+train <- toyDF[train_row, ]
+test <- toyDF[-train_row, ]
 ```
 
 ## Calculations

@@ -192,8 +192,6 @@ toyDF &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>(
     <span class="dt">row.names =</span> users, 
     <span class="dt">col.names =</span> items)
 
-
-
 knitr::<span class="kw">kable</span>(toyDF)</code></pre></div>
 <table>
 <thead>
@@ -501,9 +499,14 @@ knitr::<span class="kw">kable</span>(toyDF)</code></pre></div>
 <li>If you choose to work with a large dataset, you’re encouraged to also create a small, relatively dense “user-item” matrix as a subset so that you can hand-verify your calculations.</li>
 <li>Break your ratings into separate training and test datasets</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">train_index &lt;-<span class="st"> </span><span class="kw">sample</span>(n, <span class="dt">size =</span> <span class="kw">floor</span>(<span class="dv">2</span>/<span class="dv">3</span> *<span class="st"> </span>n), <span class="dt">replace=</span>F)
-train &lt;-<span class="st"> </span>toyDF[train_index, ]
-test &lt;-<span class="st"> </span>toyDF[-train_index, ]</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># THIS IS WRONG - Out of time to find an elegant solution to sample for RecSys</span>
+<span class="co"># so that train and test have the same dimensions AND ensure proper distribution </span>
+<span class="co"># eg - userA only rates 1 movie, make sure it ends up in 'train'.   Look forward </span>
+<span class="co"># to seeing how others have solved this.</span>
+
+train_row &lt;-<span class="st"> </span><span class="kw">sample</span>(n, <span class="dt">size =</span> <span class="kw">floor</span>(<span class="dv">2</span>/<span class="dv">3</span> *<span class="st"> </span>n), <span class="dt">replace=</span>F)
+train &lt;-<span class="st"> </span>toyDF[train_row, ]
+test &lt;-<span class="st"> </span>toyDF[-train_row, ]</code></pre></div>
 </div>
 <div id="calculations" class="section level2">
 <h2>Calculations</h2>
