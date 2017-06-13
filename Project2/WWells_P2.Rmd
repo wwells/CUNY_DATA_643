@@ -1,0 +1,206 @@
+---
+title: "DATA 643: Recommender Systems"
+author: "Walt Wells, Summer 2017"
+subtitle: "Project 2"
+output:
+  html_document:
+    css: ../custom.css
+    highlight: zenburn
+    theme: lumen
+---
+
+# Assignment Requirements
+
+_The goal of this assignment is for you to try out different ways of implementing and configuring a recommender, and to evaluate your different approaches._
+
+For assignment 2, start with an existing dataset of user-item ratings, such as our toy books dataset, MovieLens, Jester [http://eigentaste.berkeley.edu/dataset/] or another dataset of your choosing. Implement at least two of these recommendation algorithms:
+
+* Content-Based Filtering
+* User-User Collaborative Filtering
+* Item-Item Collaborative Filtering
+
+As an example of implementing a Content-Based recommender, you could build item profiles for a subset of MovieLens movies from scraping http://www.imdb.com/ or using the API at https://www.omdbapi.com/ (which has very recently instituted a small monthly fee). A more challenging method would be to pull movie summaries or reviews and apply tf-idf and/or topic modeling.
+
+You should evaluate and compare different approaches, using different algorithms, normalization techniques, similarity methods, neighborhood sizes, etc. You don’t need to be exhaustive—these are just some suggested possibilities.
+
+You may use the course text’s recommenderlab or any other library that you want.
+Please provide at least one graph, and a textual summary of your findings and recommendations.
+
+# Environment Prep
+
+```{r, message=F, warning=F}
+if (!require('recommenderlab')) install.packages('recommenderlab')
+if (!require('ggplot2')) install.packages('ggplot2')
+if (!require('XML')) install.packages('XML')
+```
+
+# Data Import
+
+For this project we will use a subset of Dataset 2+ of the [Jester dataset](http://eigentaste.berkeley.edu/dataset/). 
+
+This dataset is used courtesy of Dr. Ken Goldberg.  
+
+__Publication Citation:__
+Eigentaste: A Constant Time Collaborative Filtering Algorithm. Ken Goldberg, Theresa Roeder, Dhruv Gupta, and Chris Perkins. Information Retrieval, 4(2), 133-151. July 2001. 
+
+To make it easier to import, the .zip file has been downloaded and the resulting .xls converted to a simple csv. 
+
+```{r, cache=TRUE}
+jester <- read.csv("jesterfinal151cols.csv", header=F)
+Full <- dim(jester)
+```
+
+# Subset 
+
+Our goal here is simply to get a manageable subset of the full dataset, but with a nice sparseness ratio to make it easier to understand the model concepts. 
+
+## Subset Method 1: User - How Many Jokes Were Rated? 
+
+```{r, message=F, warning=F}
+# to keep our utility matrix manageable, we will use only the tiny slice with the number of observations equal to our cutoff
+n <- .6 # will keep matrix semi-sparse
+cutoff <- quantile(jester$V1, n)[[1]]
+temp <- jester[jester$V1 == cutoff,] 
+
+# change 99s (default NA) to NAs
+temp[temp==99] <- NA
+Sub1 <- dim(temp)
+```
+
+## Subset Method 2: Jokes - Remove Col with NO and ALL Ratings
+
+```{r, message=F, warning=F}
+# https://stackoverflow.com/questions/11330138/find-columns-with-all-missing-values
+allNAs <- sapply(temp, function(x) all(is.na(x)))
+#table(allNAs)
+temp <- temp[,!allNAs]
+noNAs <- sapply(temp, function(x) all(!is.na(x)))
+#table(noNAs)
+temp <- temp[,!noNAs]
+Sub2 <- dim(temp)
+```
+
+## Subset Method 3: Jokes - Iteratively Remove Col and Rows Based on Max nonNA
+
+```{r}
+subsetLoop <- function(n, df, max) {
+    # iteratively remove rows and columns based on max nonNA
+    for (i in 1:n){
+        df <- df[,colSums(!is.na(df)) > max] 
+        df <- df[rowSums(!is.na(df)) < max,] 
+    }
+    df
+}
+
+utility <- subsetLoop(3, temp, 18)
+Sub3 <- dim(utility)
+```
+
+## Subset Review
+
+```{r, message=F, warning=F}
+percentReduction <- round((1 - Sub3/Full) * 100, 0)
+review <- t(data.frame(Full, Sub1, Sub2, Sub3, percentReduction, 
+                       row.names=c("Users", "Jokes")))
+knitr::kable(review)
+
+populated <- colSums(!is.na(utility))
+quantile(populated)
+qplot(populated) + stat_bin(bins = 50) + ggtitle("Distribution of Number of Times a Joke was Ranked in Final Utility Matrix")
+```
+
+# Data Preparation
+
+In this section we will take convert our utility matrix into a "realRatingMatrix" object for use with the "recommenderlab" package, do some initial data exploration, and split our data into train and test sets to prepare for modeling.
+
+## RecommenderLab Matrix
+
+```{r}
+jesterUtility <- as(as.matrix(utility), "realRatingMatrix")
+rm(jester, temp, review) #clean house
+```
+
+## Data Exploration
+
+```{r, warning=F, message=F}
+mean_rating <- colMeans(jesterUtility)
+quantile(mean_rating)
+goodrating <- quantile(mean_rating, .5)
+qplot(mean_rating) + ggtitle("Distribution of Joke Rating") + geom_vline(xintercept = goodrating, col='orange')
+image(jesterUtility, main="Heatmap Users and Jokes")
+```
+
+## Train and Test Split
+
+```{r}
+set.seed(643)
+eval_sets <- evaluationScheme(data=jesterUtility, 
+                              method = "split",
+                              train = 0.8,
+                              given = 1,
+                              goodRating = goodrating, # >= 50% of the mean ratings
+                              k = 1)
+eval_sets
+getData(eval_sets, "train")
+getData(eval_sets, "known")
+getData(eval_sets, "unknown")
+```
+
+# Modeling
+
+## Helper Function - RMSE
+
+```{r}
+RMSE <- function(observed, predicted) {
+    # get RMSE
+    sqrt(mean((observed - predicted)^2, na.rm=TRUE))
+}
+```
+
+## Baseline
+
+```{r}
+train_raw_avg <- mean(getRatings(getData(eval_sets, "train")))
+Baseline_RMSE <- RMSE(getRatings(getData(eval_sets, "train")), train_raw_avg)
+Baseline_RMSE
+```
+
+## Item Based Collaborative Filtering (IBCF)
+
+## User Based Collaborative Filtering (UBCF)
+
+## Hybrid
+
+# Results
+
+Show recommended joke from zip file
+
+## Jokes
+
+```{r}
+getJoke <- function(recnum) {
+    # get a recommended joke from the zip file w/o unziping in mem
+    filename <- paste0('jokes/init', recnum, '.html')
+    joke <- readLines(unz('jester_dataset_1_joke_texts.zip', filename))
+    # inspired by: http://www.quantumforest.com/2011/10/reading-html-pages-in-r-for-text-processing/
+    html <- htmlTreeParse(joke,useInternal = TRUE)
+    text <- unlist(xpathApply(html, '//td', xmlValue))
+    text <- gsub('\n', ' ', text)
+    text <- sub("^[^a-zA-Z]*", "", text)
+    text <- gsub('  ', ' ', text)
+    text <- gsub("\\\"", "'", text)
+    text <- paste(text, collapse = ' ')
+}
+
+myjoke <- getJoke(18)
+myjoke
+```
+
+# References
+
+* [Building a Recommendation System with R by Suresh K. Gorakala, Michele Usuelli](https://www.amazon.com/dp/B012O8S1YM/ref=dp-kindle-redirect?_encoding=UTF8&btkr=1)
+* https://stackoverflow.com/questions/11330138/find-columns-with-all-missing-values
+* https://github.com/wwells/CUNY_DATA_643/blob/master/Project1/WWells_P1.Rmd
+* http://www.quantumforest.com/2011/10/reading-html-pages-in-r-for-text-processing/
+
+

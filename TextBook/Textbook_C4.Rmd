@@ -1,0 +1,86 @@
+---
+title: "DATA 643 Prep: Chapter 4, Data Mining Techniques"
+output:
+  html_document:
+    theme: lumen
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Text
+
+Building a Recommendation System with R
+by Suresh K. Gorakala (Author), Michele Usuelli (Author) 
+https://www.amazon.com/dp/B012O8S1YM/ref=dp-kindle-redirect?_encoding=UTF8&btkr=1
+
+# Evaluating the Recommender Systems
+
+## Preparing data to evaluate the models
+
+```{r, warning=FALSE, message=FALSE}
+library(recommenderlab); library(ggplot2)
+data(MovieLense)
+ratings_movies <- MovieLense[rowCounts(MovieLense) > 50, colCounts(MovieLense) > 100]
+ratings_movies
+```
+
+## Splitting the data
+
+```{r}
+percentage_training <- 0.8
+min(rowCounts(ratings_movies))
+items_to_keep <- 15
+rating_threshold <- 3
+n_eval <- 1
+
+eval_sets <- evaluationScheme(data=ratings_movies, 
+                              method = "split",
+                              train = percentage_training,
+                              given = items_to_keep,
+                              goodRating = rating_threshold,
+                              k = n_eval)
+eval_sets
+getData(eval_sets, "train")
+nrow(getData(eval_sets, "train")) / nrow(ratings_movies)
+getData(eval_sets, "known")
+getData(eval_sets, "unknown")
+nrow(getData(eval_sets, "known")) / nrow(ratings_movies)
+unique(rowCounts(getData(eval_sets, "known")))
+qplot(rowCounts(getData(eval_sets, "unknown"))) + geom_histogram(bindwidth = 10) + 
+    ggtitle("unknown items by users")
+```
+
+## Boostrapping data
+
+```{r}
+eval_sets <- evaluationScheme(data=ratings_movies, 
+                              method = "bootstrap",
+                              train = percentage_training,
+                              given = items_to_keep,
+                              goodRating = rating_threshold,
+                              k = n_eval)
+
+nrow(getData(eval_sets, "train")) / nrow(ratings_movies)
+nrow(getData(eval_sets, "known")) / nrow(ratings_movies)
+length(unique(eval_sets@runsTrain[[1]]))
+table_train <- table(eval_sets@runsTrain[[1]])
+n_repetitions <- factor(as.vector(table_train))
+qplot(n_repetitions) + ggtitle("Number of Repetitions in the Training Set")
+```
+
+## Using k-fold to Validate Models
+
+```{r}
+n_fold <- 4
+eval_sets <- evaluationScheme(data=ratings_movies, 
+                              method = "cross-validation",
+                              train = percentage_training,
+                              given = items_to_keep,
+                              goodRating = rating_threshold,
+                              k = n_fold)
+size_sets <- sapply(eval_sets@runsTrain, length)
+size_sets
+```
