@@ -84,3 +84,90 @@ eval_sets <- evaluationScheme(data=ratings_movies,
 size_sets <- sapply(eval_sets@runsTrain, length)
 size_sets
 ```
+
+# Evaluating the Model
+
+## Evaluating the ratings
+
+```{r}
+model_to_evaluate <- "IBCF"
+model_parameters <- NULL
+eval_recommender <- Recommender(data=getData(eval_sets, "train"), method = "IBCF", parameter = NULL)
+eval_prediction <- predict(object = eval_recommender, newdata = getData(eval_sets, "known"), n = 10, type = "ratings")
+qplot(rowCounts(eval_prediction)) + geom_histogram(binwidth = 10) + ggtitle("Distribution of movies per user")
+eval_accuracy = calcPredictionAccuracy(x = eval_prediction, data = getData(eval_sets, "unknown"), byUser = T)
+head(eval_accuracy)
+qplot(eval_accuracy[, "RMSE"]) + geom_histogram(bindwidth = 0.1) + ggtitle("Distribution of the RMSE by User")
+
+## calc for whole model
+eval_accuracy = calcPredictionAccuracy(x = eval_prediction, data = getData(eval_sets, "unknown"), byUser = F)
+eval_accuracy
+```
+
+## Evaluating the recommendations
+
+```{r}
+results <- evaluate(x = eval_sets, method = model_to_evaluate, n=seq(10, 100, 10))
+class(results)
+head(getConfusionMatrix(results)[[1]])
+columns_to_sum <- c("TP", "FP", "FN", "TN")
+indices_summed <- Reduce("+", getConfusionMatrix(results))[, columns_to_sum]
+head(indices_summed)
+```
+
+```{r}
+plot(results, annotate = TRUE, main = "ROC curve")
+plot(results, "prec/rec", annotate=T, main="Precision-Recall")
+```
+
+# Identifying the Most Suitable Model
+
+```{r}
+models_to_evaluate <- list(
+    IBCF_cos = list(name = "IBCF", param = list(method = "cosine")),
+    IBCF_cor = list(name = "IBCF", param = list(method = "pearson")),
+    UBCF_cos = list(name = "UBCF", param = list(method = "cosine")),
+    UBCF_cor = list(name = "UBCF", param = list(method = "pearson")),
+    UBCF_cos_norm = list(name = "UBCF", param = list(
+        normalize = "Z-score", method="cosine")),
+    random = list(name = "RANDOM", param =  NULL)
+)
+
+n_recommendations <- c(1, 5, seq(10, 100, 10))
+
+list_results <- evaluate(x = eval_sets, method = models_to_evaluate, n = n_recommendations)
+
+class(list_results)
+class(list_results[[1]])
+
+avg_matrices <- lapply(list_results, avg)
+head(avg_matrices$IBCF_cos[,5:8])
+```
+
+## Identifying the Best Model
+
+```{r}
+plot(list_results, annotate=1, legend = "topleft") 
+title("ROC curve")
+
+plot(list_results, "prec/rec", annotate = 1, legend = "bottomright")
+title("Precision-recall")
+```
+
+## Optimizing a numeric parameter
+
+```{r}
+vector_k <- c(5, 10, 20, 30, 40)
+models_to_evaluate <- lapply(vector_k, function(k) {
+    list(name = "IBCF", param = list(method = "cosine", k = k))
+})
+names(models_to_evaluate) <- paste0("IBCF_k_", vector_k)
+
+n_recommendations <- c(1, 5, seq(10, 100, 10))
+list_results <- evaluate(x = eval_sets, method = models_to_evaluate, n = n_recommendations)
+
+plot(list_results, annotate=1, legend = "topleft")
+title("ROC curve")
+plot(list_results, "prec/rec", annotate=1, legend = "bottomright")
+title("Precision-Recall")
+```
