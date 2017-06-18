@@ -113,9 +113,57 @@ head(table_items)
 table_items[, list(n_items= .N), by=category]
 ```
 
-# Building the Model
+# Building the Model {.tabset .tabset-pills} 
 
 ```{r}
+which_train <- sample(x = c(TRUE, FALSE), 
+                      size = nrow(ratings_matrix), 
+                      replace = TRUE, 
+                      prob = c(0.8, 0.2))
+recc_data_train <- ratings_matrix[which_train, ]
+recc_data_test <- ratings_matrix[!which_train,]
 
+recc_model <- Recommender(data = recc_data_train, 
+                          method = "IBCF", 
+                          parameter = list(method = "Jaccard"))
+image(recc_model@model$sim)
+```
+
+## Combine Distance matrix with descriptions
+
+```{r}
+dist_ratings <- as(recc_model@model$sim, "matrix")
+dist_category <- table_items[, 1 - dist(category == "product")]
+dist_category <- as(dist_category, "matrix")
+dim(dist_category); dim(dist_ratings) # different sizes, because model only rated those purchased
+```
+
+## Match itemnames
+
+```{r}
+rownames(dist_category) <- table_items[, id]
+colnames(dist_category) <- table_items[, id]
+vector_items <- rownames(dist_ratings)
+dist_category <- dist_category[vector_items, vector_items] #subset
+```
+
+## Show sorted map of ratings Dist
+
+```{r}
+image(dist_category)
+```
+
+## Combine Tables | add to model
+
+```{r}
+weight_category <- 0.25
+dist_tot <- dist_category * weight_category + dist_ratings * (1 - weight_category)
+recc_model@model$sim <- as(dist_tot, "dgCMatrix")
+image(dist_tot)
+```
+
+## Predict
+
+```{r}
 
 ```
