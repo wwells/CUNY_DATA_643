@@ -24,11 +24,11 @@ SVD:  Retain 80-90% of the Variability
 
 We will use sum of squares technique to determine variability reduction.  A general rule of thumb is to keep 80-90% of the variability.  
 
-$$\frac{||\Sigma'||^2}{||\Sigma||^2} \approx .90$$
+$$\frac{\sum_{i=1}^{n} \sigma_i'^{2}}{\sum_{i=1}^{n} \sigma_i^{2}} \approx .90$$
 
 NOTE: if we remove singular values and reconstruct our original Matrix M to be M' prime, and calculate variability, we get the same answer. 
 
-$$\frac{||\Sigma'||^2}{||\Sigma||^2} = \frac{||M'||^2}{||M||^2} $$
+$$\frac{\sum_{i=1}^{n} \sigma_i'^{2}}{\sum_{i=1}^{n} \sigma_i^{2}} = \frac{\sum_{i=1}^{n} M_i'^{2}}{\sum_{i=1}^{n} M_i^{2}} $$
 
 
 Example 1: Generate Toy Data, Perform SVD
@@ -58,7 +58,7 @@ head(toyDF[1:15], 5)
 ```
 
 ```r
-toyDFsvd <- svd(toyDF)
+toyDFsvd <- svd(scale(toyDF, center=colMeans(toyDF), scale=F))
 S <- diag(toyDFsvd$d)
 U <- toyDFsvd$u
 V <- toyDFsvd$v
@@ -99,16 +99,21 @@ class: small-code
 
 ```
    concepts variability
-1         1   0.8593113
-2         2   0.8819881
-3         3   0.8975009
-4         4   0.9108730
-5         5   0.9233403
-6         6   0.9348872
-7         7   0.9442018
-8         8   0.9524798
-9         9   0.9601363
-10       10   0.9669393
+1         1   0.1468348
+2         2   0.2704893
+3         3   0.3693998
+4         4   0.4537191
+5         5   0.5334498
+6         6   0.6065810
+7         7   0.6601810
+8         8   0.7123226
+9         9   0.7571603
+10       10   0.7996901
+11       11   0.8386459
+12       12   0.8716887
+13       13   0.9019741
+14       14   0.9272027
+15       15   0.9470246
 ```
 
 ```
@@ -124,5 +129,7 @@ Example 2:  Image SVD
 References
 ========================================================
 
+* [Mining of Massive Datasets, Anand Rajaraman and Jeffrey Ullman, Chapter 11.3](http://infolab.stanford.edu/~ullman/mmds/book.pdf)
+* [SVD Gives the Best Low Rank Approximation (Advanced) | Stanford (VIDEO)](https://youtu.be/c7e-D2tmRE0?list=PLLssT5z_DsK9JDLcT8T62VtzwyW9LNepV)
 * https://www.r-bloggers.com/image-compression-with-singular-value-decomposition/
 
