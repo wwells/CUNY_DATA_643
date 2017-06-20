@@ -165,5 +165,27 @@ image(dist_tot)
 ## Predict
 
 ```{r}
+n_recommended <- 10
+recc_predicted <- predict(object = recc_model, 
+                          newdata = recc_data_test, 
+                          n = n_recommended)
+table_labels <- data.frame(id = recc_predicted@itemLabels)
+table_labels <- merge(table_labels, table_items, by="id", 
+                      all.x = TRUE, all.y = FALSE, sort = FALSE)
+descriptions <- as(table_labels$description, "character")
+head(table_labels)
+```
 
+## Extract User
+
+```{r}
+recc_user_1 <- recc_predicted@items[[1]]
+items_user_1 <- descriptions[recc_user_1]
+#head(items_user_1)
+recc_matrix <- sapply(recc_predicted@items, function(x){
+    recommended <- descriptions[x]
+    c(recommended, rep("", n_recommended - length(recommended)))
+})
+dim(recc_matrix)
+head(recc_matrix[,1:3])
 ```
