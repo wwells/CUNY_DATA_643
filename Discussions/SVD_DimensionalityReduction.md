@@ -4,22 +4,22 @@
 }
 </style>
 
-SVD: Dimensionality Reduction
+SVD: Dimension Retension
 ========================================================
-author: CUNY DATA 643: Recommender Systems
+author: CUNY - DATA 643: Recommender Systems
 date: Walt Wells, Summer 2017
 autosize: true
 transition: rotate
 transition-speed: slow
 
-SVD:  What to Keep? 
+SVD:  What should we retain?
 ========================================================
 
-<br>
-<br>
-<img src="SVD.jpg", align="middle">
+<img src="SVD.jpeg", align="middle">
+* Different methods for different purposes.  
+* Our focus: dimension reduction for RecSys. 
 
-SVD:  Retain 80-90% of the Variability
+Retain 80-90% of the Variability
 ========================================================
 
 We will use sum of squares technique to determine variability reduction.  A general rule of thumb is to keep 80-90% of the variability.  
@@ -31,7 +31,7 @@ NOTE: if we remove singular values and reconstruct our original Matrix M to be M
 $$\frac{\sum_{i=1}^{n} \sigma_i'^{2}}{\sum_{i=1}^{n} \sigma_i^{2}} = \frac{\sum_{i=1}^{n} M_i'^{2}}{\sum_{i=1}^{n} M_i^{2}} $$
 
 
-Example 1: Generate Toy Data, Perform SVD
+Example: Generate Toy Data
 ========================================================
 class: small-code
 
@@ -45,25 +45,88 @@ toyDF <- as.data.frame(replicate(m, floor(runif(n, 1,6))))
 toyDF[,1:3] <- toyDF[,1:3] + 1; toyDF[,4:6] <- toyDF[,4:6] - 1
 toyDF[1:3,] <- toyDF[1:3,] + 1; toyDF[4:6,] <- toyDF[4:6,] - 1
 toyDF[toyDF > 5] <- 5; toyDF[toyDF < 1] <- 1
-head(toyDF[1:15], 5)
+dim(toyDF)
 ```
 
 ```
-  V1 V2 V3 V4 V5 V6 V7 V8 V9 V10 V11 V12 V13 V14 V15
-1  5  5  5  5  1  5  4  4  2   3   4   5   5   2   5
-2  5  5  5  5  3  5  2  3  5   2   5   3   5   5   3
-3  5  3  5  5  3  4  3  3  4   4   2   4   5   5   4
-4  3  3  5  2  3  1  3  1  3   4   2   2   1   2   3
-5  3  5  1  1  1  2  4  1  3   1   4   3   1   3   4
+[1] 40 20
 ```
 
 ```r
-toyDFsvd <- svd(scale(toyDF, center=colMeans(toyDF), scale=F))
-S <- diag(toyDFsvd$d)
-U <- toyDFsvd$u
-V <- toyDFsvd$v
+head(toyDF[1:8], 5)
 ```
 
+```
+  V1 V2 V3 V4 V5 V6 V7 V8
+1  5  5  5  5  1  5  4  4
+2  5  5  5  5  3  5  2  3
+3  5  3  5  5  3  4  3  3
+4  3  3  5  2  3  1  3  1
+5  3  5  1  1  1  2  4  1
+```
+
+Example: Center and Scale Data
+========================================================
+class: small-code
+
+
+```r
+scaledToyDF <- data.frame(scale(toyDF, 
+                                center=T, 
+                                scale=T))
+head(scaledToyDF[1:8], 5)
+```
+
+```
+          V1         V2         V3         V4         V5         V6
+1  0.8898194  1.1915915  0.8496424  1.8432099 -1.0006448  1.9462608
+2  0.8898194  1.1915915  0.8496424  1.8432099  0.7025804  1.9462608
+3  0.8898194 -0.4808176  0.8496424  1.8432099  0.7025804  1.1976989
+4 -0.7280340 -0.4808176  0.8496424 -0.2835708  0.7025804 -1.0479866
+5 -0.7280340  1.1915915 -2.1713083 -0.9924976 -1.0006448 -0.2994247
+           V7          V8
+1  0.86114897  0.79358975
+2 -0.74098864  0.08817664
+3  0.06008016  0.08817664
+4  0.06008016 -1.32264958
+5  0.86114897 -1.32264958
+```
+
+Example: Perform SVD, Compare
+========================================================
+class: small-code
+
+<br>
+
+
+```r
+S <- diag(svd(toyDF)$d)
+S[1:3, 1:3]
+```
+
+```
+         [,1]     [,2]     [,3]
+[1,] 88.39038  0.00000  0.00000
+[2,]  0.00000 14.35887  0.00000
+[3,]  0.00000  0.00000 11.87614
+```
+
+***
+
+<br>
+
+
+```r
+S_Center_Scale <- diag(svd(scaledToyDF)$d)
+S_Center_Scale[1:3, 1:3]
+```
+
+```
+         [,1]     [,2]     [,3]
+[1,] 10.50825 0.000000 0.000000
+[2,]  0.00000 9.713093 0.000000
+[3,]  0.00000 0.000000 8.769423
+```
 
 Helper Function: Create Variability Table
 ========================================================
@@ -84,46 +147,51 @@ SVD_DimReductionTable <- function(s) {
 }
 
 mytable <- SVD_DimReductionTable(S)
+mytable_CS <- SVD_DimReductionTable(S_Center_Scale)
 ```
 
-Example 1:  Toy Data Results
+Example: Determine Retension Cutoff
 ========================================================
 class: small-code
-<br>
+left: 60%
 
-![plot of chunk unnamed-chunk-3](SVD_DimensionalityReduction-figure/unnamed-chunk-3-1.png)
+![plot of chunk unnamed-chunk-6](SVD_DimensionalityReduction-figure/unnamed-chunk-6-1.png)
 
 ***
-<br>
-<br>
+
+Raw Data
 
 ```
-   concepts variability
-1         1   0.1468348
-2         2   0.2704893
-3         3   0.3693998
-4         4   0.4537191
-5         5   0.5334498
-6         6   0.6065810
-7         7   0.6601810
-8         8   0.7123226
-9         9   0.7571603
-10       10   0.7996901
-11       11   0.8386459
-12       12   0.8716887
-13       13   0.9019741
-14       14   0.9272027
-15       15   0.9470246
+  concepts variability
+1        1   0.8593113
+2        2   0.8819881
+3        3   0.8975009
+4        4   0.9108730
+5        5   0.9233403
+6        6   0.9348872
 ```
 
+Center and Scaled
+
 ```
-[1] "ToyDF has 40 singular values or 'concepts' total."
+  concepts variability
+1        1   0.1415683
+2        2   0.2625224
+3        3   0.3611157
+4        4   0.4458154
+5        5   0.5239411
+6        6   0.5948652
 ```
 
-Example 2:  Image SVD
+
+Summary
 ========================================================
 
-![plot of chunk unnamed-chunk-5](SVD_DimensionalityReduction-figure/unnamed-chunk-5-1.png)
+* Can compare sum of squares of reduced $\Sigma$ and original $\Sigma$
+* For RecSys, rule of thumb is to keep 80-90% of the variability
+* Centering and scaling data changes the concept/variability relationship
+
+<img src="SVD2.jpeg", align="middle">
 
 
 References
@@ -131,5 +199,4 @@ References
 
 * [Mining of Massive Datasets, Anand Rajaraman and Jeffrey Ullman, Chapter 11.3](http://infolab.stanford.edu/~ullman/mmds/book.pdf)
 * [SVD Gives the Best Low Rank Approximation (Advanced) | Stanford (VIDEO)](https://youtu.be/c7e-D2tmRE0?list=PLLssT5z_DsK9JDLcT8T62VtzwyW9LNepV)
-* https://www.r-bloggers.com/image-compression-with-singular-value-decomposition/
 
