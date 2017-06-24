@@ -191,7 +191,7 @@ didnotRate <- is.na(SampleUserActual)
 
 ## Get qV
 
-Our prediction is gained by recomposing the Utility Matrix using our factorized matrix.  We then add those given values to the colMeans of the original scaled matrix (preSVD).  
+Our prediction is gained by recomposing the Utility Matrix using our factorized matrix. We then add those given values to the colMeans of the original scaled matrix (preSVD).
 
 $$\hat{r}_{ui} = \bar{r}_u + U_{ki} * \Sigma_k * V_k^t$$
 
