@@ -172,7 +172,7 @@ hist(colMeans(utilityM), main = "Dist of Mean Item Rating")
 
 ```{r}
 summary(as.vector(utilityM))
-rm(indx, jesterScaled, U, SMat, V) # CleanHouse
+rm(indx, U, SMat, V) # CleanHouse
 ```
 
 # Modeling: Use $U$ and $V$ to Recommend  {.tabset .tabset-pills}
@@ -191,8 +191,12 @@ didnotRate <- is.na(SampleUserActual)
 
 ## Get qV
 
+Our prediction is gained by recomposing the Utility Matrix using our factorized matrix.  We then add those given values to the colMeans of the original scaled matrix (preSVD).  
+
+$$\hat{r}_{ui} = \bar{r}_u + U_{ki} * \Sigma_k * V_k^t$$
+
 ```{r}
-qV <- q %*% t(NewV)
+qV <- colMeans(jesterScaled) + q %*% NewSMat %*% t(NewV)
 qV[!didnotRate] <- NA #remove the predictions from the ones already rated
 qV <- data.frame(Index = ItemIndex, 
                  Prediction = t(qV))
@@ -252,5 +256,6 @@ print(getJoke(top_rec))
 * [SVD Gives the Best Low Rank Approximation (Advanced) | Stanford (VIDEO)](https://youtu.be/c7e-D2tmRE0?list=PLLssT5z_DsK9JDLcT8T62VtzwyW9LNepV)
 * https://stackoverflow.com/questions/25835643/replacing-missing-values-in-r-with-column-mean
 * https://stats.stackexchange.com/questions/214728/should-data-be-normalized-before-or-after-imputation-of-missing-data
+* http://ijcai13.org/files/tutorial_slides/td3.pdf
 
 

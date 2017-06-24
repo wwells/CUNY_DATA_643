@@ -397,7 +397,7 @@ NewV &lt;-<span class="st"> </span>V[,<span class="dv">1</span>:k]</code></pre><
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(<span class="kw">as.vector</span>(utilityM))</code></pre></div>
 <pre><code>##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
 ## -3.575000 -0.011200  0.000064  0.000000  0.013020  2.886000</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">rm</span>(indx, jesterScaled, U, SMat, V) <span class="co"># CleanHouse</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">rm</span>(indx, U, SMat, V) <span class="co"># CleanHouse</span></code></pre></div>
 </div>
 </div>
 <div id="modeling-use-u-and-v-to-recommend" class="section level1 tabset tabset-pills">
@@ -413,7 +413,9 @@ didnotRate &lt;-<span class="st"> </span><span class="kw">is.na</span>(SampleUse
 </div>
 <div id="get-qv" class="section level2">
 <h2>Get qV</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">qV &lt;-<span class="st"> </span>q %*%<span class="st"> </span><span class="kw">t</span>(NewV)
+<p>Our prediction is gained by recomposing the Utility Matrix using our factorized matrix. We then add those given values to the colMeans of the original scaled matrix (preSVD).</p>
+<p><span class="math display">\[\hat{r}_{ui} = \bar{r}_u + U_{ki} * \Sigma_k * V_k^t\]</span></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">qV &lt;-<span class="st"> </span><span class="kw">colMeans</span>(jesterScaled) +<span class="st"> </span>q %*%<span class="st"> </span>NewSMat %*%<span class="st"> </span><span class="kw">t</span>(NewV)
 qV[!didnotRate] &lt;-<span class="st"> </span><span class="ot">NA</span> <span class="co">#remove the predictions from the ones already rated</span>
 qV &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">Index =</span> ItemIndex, 
                  <span class="dt">Prediction =</span> <span class="kw">t</span>(qV))</code></pre></div>
@@ -424,11 +426,11 @@ qV &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class=
 sorted_qV &lt;-<span class="st"> </span>qV[<span class="kw">order</span>(-qV$Prediction), ]
 top_rec &lt;-<span class="st"> </span><span class="kw">as.character</span>(sorted_qV$Index[<span class="dv">1</span>])
 <span class="kw">head</span>(sorted_qV, n)</code></pre></div>
-<pre><code>##    Index  Prediction
-## 35   V46 0.008575660
-## 76   V87 0.008519948
-## 60   V71 0.007347025
-## 27   V38 0.005963006</code></pre>
+<pre><code>##    Index Prediction
+## 76   V87  0.8972938
+## 35   V46  0.8151616
+## 60   V71  0.6834120
+## 27   V38  0.6536403</code></pre>
 </div>
 <div id="get-previous-favorite" class="section level2">
 <h2>Get Previous Favorite</h2>
@@ -461,9 +463,9 @@ top_rec &lt;-<span class="st"> </span><span class="kw">as.character</span>(sorte
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(<span class="kw">getJoke</span>(userfav))</code></pre></div>
 <pre><code>## [1] &quot; A guy walks into a bar, orders a beer and says to the bartender, 'Hey, I got this great Polish Joke...'  The barkeep glares at him and says in a warning tone of voice: 'Before you go telling that joke you better know that I'm Polish, both bouncers are Polish and so are most of my customers' 'Okay' says the customer,'I'll tell it very slowly.'  &quot;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(<span class="kw">paste0</span>(<span class="st">&quot;Recommended Joke: &quot;</span>, top_rec))</code></pre></div>
-<pre><code>## [1] &quot;Recommended Joke: V46&quot;</code></pre>
+<pre><code>## [1] &quot;Recommended Joke: V87&quot;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(<span class="kw">getJoke</span>(top_rec))</code></pre></div>
-<pre><code>## [1] &quot; A couple has been married for 75 years. For the husband's 95th birthday, his wife decides to surprise him by hiring a prostitute. That day, the doorbell rings. The husband uses his walker to get to the door and opens it. A 21-year-old in a latex outfit smiles and says, 'Hi, I here to give you super sex!' The old man says, 'I'll take the soup.' &quot;</code></pre>
+<pre><code>## [1] &quot;A man, recently completing a routine physical examination receives a phone call from his doctor. The doctor says, 'I have some good news and some bad news.' The man says, 'OK, give me the good news first.' The doctor says, 'The good news is, you have 24 hours to live.' The man replies, 'Shit! That's the good news? Then what's the bad news?' The doctor says, 'The bad news is, I forgot to call you yesterday.'  &quot;</code></pre>
 </div>
 </div>
 <div id="references" class="section level1">
@@ -475,6 +477,7 @@ top_rec &lt;-<span class="st"> </span><span class="kw">as.character</span>(sorte
 <li><a href="https://youtu.be/c7e-D2tmRE0?list=PLLssT5z_DsK9JDLcT8T62VtzwyW9LNepV">SVD Gives the Best Low Rank Approximation (Advanced) | Stanford (VIDEO)</a></li>
 <li><a href="https://stackoverflow.com/questions/25835643/replacing-missing-values-in-r-with-column-mean" class="uri">https://stackoverflow.com/questions/25835643/replacing-missing-values-in-r-with-column-mean</a></li>
 <li><a href="https://stats.stackexchange.com/questions/214728/should-data-be-normalized-before-or-after-imputation-of-missing-data" class="uri">https://stats.stackexchange.com/questions/214728/should-data-be-normalized-before-or-after-imputation-of-missing-data</a></li>
+<li><a href="http://ijcai13.org/files/tutorial_slides/td3.pdf" class="uri">http://ijcai13.org/files/tutorial_slides/td3.pdf</a></li>
 </ul>
 </div>
 
