@@ -206,3 +206,148 @@ table_top <- data.frame(name = names(recomm_per_item_top),
                         n_recommend = recomm_per_item_top)
 table_top
 ```
+
+# Evaluating and optimizing the model {.tabset .tabset-pills} 
+
+## Function to Eval Model
+
+```{r}
+evaluateModel <- function(
+    #inputs
+    ratings_matrix, 
+    table_items, 
+    n_fold = 10,
+    items_to_keep = 4,
+    number_neighbors = 30, 
+    weight_description = 0.2, 
+    items_to_recommend = 10
+) {
+    set.seed(1)
+    eval_sets <- evaluationScheme(data = ratings_matrix,
+                                  method = "cross-validation",
+                                  k = n_fold,
+                                  given = items_to_keep)
+    recc_model <- Recommender(data = getData(eval_sets, "train"), 
+                              method = "IBCF",
+                              parameter = list(method = "Jaccard", 
+                                               k = number_neighbors))
+    dist_ratings <- as(recc_model@model$sim, "matrix")
+    vector_items <- rownames(dist_ratings)
+    dist_category <- table_items[, 1 - as.matrix(dist(category == "product"))]
+    rownames(dist_category) <- table_items[, id]
+    colnames(dist_category) <- table_items[, id]
+    dist_category <- dist_category[vector_items, vector_items]
+    dist_tot <- dist_category * weight_description + 
+        dist_ratings * (1 - weight_description)
+    recc_model@model$sim <- as(dist_tot, "dgCMatrix")
+    eval_prediction <- predict(object = recc_model, 
+                               newdata = getData(eval_sets, "known"),
+                               n = items_to_recommend,
+                               type = "topNList")
+    eval_accuracy <- calcPredictionAccuracy(
+        x = eval_prediction,
+        data = getData(eval_sets, "unknown"),
+        byUser = F,
+        given = items_to_recommend)
+    return(eval_accuracy)
+}
+```
+
+## Test Function
+
+```{r}
+model_evaluation <- evaluateModel(ratings_matrix = ratings_matrix,
+                                  table_items = table_items)
+model_evaluation
+```
+
+# Optimizing Model Parameters {.tabset .tabset-pills} 
+
+## Table | List Performance
+
+```{r}
+nn_to_test <- seq(4, 80, by = 2)
+list_performance <- lapply(
+    X = nn_to_test,
+    FUN = function(nn) {
+        evaluateModel(ratings_matrix = ratings_matrix,
+                      table_items = table_items,
+                      number_neighbors = nn, 
+                      weight_description = 0)
+    })
+list_performance[[1]]
+
+table_performance <- data.table(
+    nn = nn_to_test,
+    precision = sapply(list_performance, "[[", "precision"),
+    recall = sapply(list_performance, "[[", "recall")
+)
+```
+
+## Define Performance Index
+
+```{r}
+weight_precision <- 0.5
+table_performance$performance <- table_performance$precision * weight_precision + table_performance$recall *(1-weight_precision)
+head(table_performance)
+```
+
+## Helper - Percent Conv
+
+```{r}
+convertIntoPercent <- function(x){
+    paste0(round(x * 100), "%")
+}
+```
+
+## Plot Precision
+
+```{r}
+qplot(table_performance$nn, table_performance$precision) + 
+    geom_smooth() + scale_y_continuous(labels=convertIntoPercent)
+```
+
+## Plot Recall
+
+```{r}
+qplot(table_performance$nn, table_performance$recall) + 
+    geom_smooth() + scale_y_continuous(labels=convertIntoPercent)
+```
+
+## Plot Performance
+
+```{r}
+qplot(table_performance$nn, table_performance$performance) + 
+    geom_smooth() + scale_y_continuous(labels=convertIntoPercent)
+```
+
+## Identify Best nn
+
+```{r}
+row_best <- which.max(table_performance$performance)
+number_neighbors_opt <- table_performance$nn[row_best]
+number_neighbors_opt # this is our optimal IBCF param
+```
+
+## Optimize Weight of Item Description
+
+```{r}
+wd_to_try <- seq(0, 1, by = 0.05)
+list_performance <- lapply(
+    X = wd_to_try,
+    FUN = function(wd){
+        evaluateModel(ratings_matrix = ratings_matrix,
+                      table_items = table_items,
+                      number_neighbors = number_neighbors_opt,
+                      weight_description = wd)
+    }
+)
+table_performance <- data.frame(
+    wd = wd_to_try,
+    precision = sapply(list_performance, "[[", "precision"),
+    recall = sapply(list_performance, "[[", "recall")
+)
+table_performance$performance <- table_performance$precision * weight_precision + table_performance$recall *(1-weight_precision)
+qplot(table_performance$wd, table_performance$performance) + geom_smooth() + 
+    scale_y_continuous(labels=convertIntoPercent)
+```
