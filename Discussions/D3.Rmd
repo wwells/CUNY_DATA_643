@@ -18,7 +18,7 @@ Sparked by section 4.2 on the "social effects of recommenders" in the assigned r
 
 In general I find this topic, and the larger topics of this week, both incredibly challenging and of the utmost importance.   As fledgling data scientists, we wander into some difficult problem spaces and because of their complexity, we may lose the scope of the larger problem and the human relationnships behind them because we're over-focused on the algorithmic solutions.   Can't tell the "forest from the trees" as it were.
 
-While focused on issues beyond the algorithms that drive recommender systems, [Weapons of Math Destruction](https://www.amazon.com/Weapons-Math-Destruction-Increases-Inequality/dp/0553418815) and [Ethics of Big Data](https://www.amazon.com/Ethics-Big-Data-Balancing-Innovation/dp/1449311792) are good starting places to begin to understand these important problems. 
+While focused on issues beyond the algorithms that drive recommender systems, [Weapons of Math Destruction](https://www.amazon.com/Weapons-Math-Destruction-Increases-Inequality/dp/0553418815) and [Ethics of Big Data](https://www.amazon.com/Ethics-Big-Data-Balancing-Innovation/dp/1449311792) are good starting places to begin to understand these important problems.  Even before that, [Code (now in v2) by Lawrence Lessig](http://codev2.cc/).  
 
 # Thoughts & Points on Fleder | Hosanger
 
