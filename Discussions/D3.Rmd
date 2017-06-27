@@ -1,0 +1,34 @@
+---
+title: 'DATA 643: Recommender Systems'
+subtitle: 'Discussion 3:  Bias Reinforcement'
+author: "Walt Wells, Summer 2017"
+output:
+  pdf_document: 
+    fig_caption: no
+  html_document:
+    css: ../custom.css
+    highlight: zenburn
+    theme: lumen
+urlcolor: blue
+---
+
+# Overview
+
+Sparked by section 4.2 on the "social effects of recommenders" in the assigned reading "Recommender Systems: from algorithms to user experience", I read the 2009 paper by [Fleder and Hosanger, "Blockbuster culture’s next rise or fall:  The effect of recommender systems on sales diversity" ](http://digital.mit.edu/wise2006/papers/5A-1_Recommendations%20WISE%20Sep%2008.pdf) that ran simulations to predict sales-diversity in recommender systems.  
+
+In general I find this topic, and the larger topics of this week, both incredibly challenging and of the utmost importance.   As fledgling data scientists, we wander into some difficult problem spaces and because of their complexity, we may lose the scope of the larger problem and the human relationnships behind them because we're over-focused on the algorithmic solutions.   Can't tell the "forest from the trees" as it were.
+
+While focused on issues beyond the algorithms that drive recommender systems, [Weapons of Math Destruction](https://www.amazon.com/Weapons-Math-Destruction-Increases-Inequality/dp/0553418815) and [Ethics of Big Data](https://www.amazon.com/Ethics-Big-Data-Balancing-Innovation/dp/1449311792) are good starting places to begin to understand these important problems. 
+
+# Thoughts & Points on Fleder | Hosanger
+
+* Some research suggests potential for greater influence with "experience goods" over "search goods."
+* Has a follow up study been conducted or is one in planning on Recommender Systems | Sales Diversity?   In the years since 2009, recommender systems have become more or less ubiquitous in most US citizen's daily lives - to a degree far greater than during the study period.   Did those trends hold?
+* The paper points out that for recommender systems that utilize certain common algorithms, simulations of sales diversity converge and a few products or suppliers control market-share.  It does point out that this can be controled for on the algorithm side - potentially by increasing weights around serendipity.   It would be interesting to see a study that conducted these simulations of sales-diversity across multiple models with nuances or factors like serendipity taken into account.  
+* Less a question, more a point - cyber-balkanization and homongenization of recommendations is a part of the self-analysis phase happening right now at big companies like [Google](http://journals.sagepub.com/doi/abs/10.1177/0894439314555329), [Facebook](https://www.nytimes.com/2017/04/25/magazine/can-facebook-fix-its-own-worst-bug.html), and others in the face of their recommender systems becoming tools for increasing the distribution of 'fake-news' or outright propaganda, and for rapid sharing of videos of hateful and disturbing acts.  
+
+# References
+
+* [Daniel Fleder and Kartik Hosanger, "Blockbuster culture’s next rise or fall:  The effect of recommender systems on sales diversity" ](http://digital.mit.edu/wise2006/papers/5A-1_Recommendations%20WISE%20Sep%2008.pdf)
+* [Joseph A. Konstan and John Riedl, "Recommender Systems: from algorithms to user experience"](https://link.springer.com/content/pdf/10.1007%2Fs11257-011-9112-x.pdf)
+* [Derek O’Callaghan, Derek Green, Maura Conway, Joe Carthy, Pádraig Cunningham, "Down the (White) Rabbit Hole: The Extreme Right and Online Recommender Systems"](https://www.insight-centre.org/sites/default/files/publications/down_the_rabbit_hole_preprint_version.pdf)
