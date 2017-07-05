@@ -1,0 +1,95 @@
+---
+title: "R Notebook"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+
+```{r}
+if (!require('sparklyr')) install.packages('sparklyr')
+if (!require('dplyr')) install.packages('dplyr')
+if (!require('reshape2')) install.packages('reshape2')
+if (!require('recommenderlab')) install.packages('recommenderlab')
+if (!require('ggplot2')) install.packages('ggplot2')
+if (!require('XML')) install.packages('XML')
+```
+
+```{r}
+jester <- read.csv("https://raw.githubusercontent.com/wwells/CUNY_DATA_643/master/Project2/jesterfinal151cols.csv", header=F)
+jester <- jester[,2:101]# remove last 50 so it matches with our available joke text
+```
+
+```{r}
+jester[jester==99] <- NA
+allNAs <- sapply(jester, function(x) all(is.na(x))) # remove cols with all NAs
+table(allNAs)
+jester <- jester[,!allNAs] 
+#for this exercise we will leave the columns where every user ranked an item 
+
+```
+
+```{r}
+jesterScaled <- data.frame(scale(jester, 
+                                center=T, 
+                                scale=T))
+
+#we'll also save our matrix names for later
+ItemIndex <- names(jesterScaled)
+
+```
+
+```{r}
+jMeans <- colMeans(jesterScaled, na.rm=TRUE)
+indx <- which(is.na(jesterScaled), arr.ind=TRUE)
+jesterScaled[indx] <- jMeans[indx[,2]]
+
+ItemIndex <- as.numeric(sub("V", "", ItemIndex))
+colnames(jesterScaled) <- ItemIndex
+head(jesterScaled)
+```
+
+```{r}
+rownames(jesterScaled) <- 1:nrow(jesterScaled)
+jesterLong <- melt(as.matrix(jesterScaled))
+names(jesterLong) <- c("user", "item", "rating")
+head(jesterLong)
+dim(jesterLong)
+```
+
+```{r}
+sc <- spark_connect(master="local")
+```
+
+```{r}
+#test if size is an issue.  
+#jesterLong <- jesterLong[1:10, ]
+```
+
+```{r}
+jester_tbl <- sdf_copy_to(sc, jesterLong, 'jester_tbl', overwrite = TRUE)
+src_tbls(sc)
+
+#tbl(sc, "spark_jester") %>% 
+#    mutate(newU = as.integer(user), newI = as.integer(item))
+#glimpse(jester_tbl)
+jester_tbl
+```
+
+```{r}
+explicit_model <- jester_tbl %>%
+    ml_als_factorization(rating.column = "rating", 
+                         user.column = "user",
+                         item.column = "item")
+summary(explicit_model)
+```
+
+```{r}
+predictions <- explicit_model$.model %>%
+    invoke("transform", spark_dataframe(jester_tbl)) %>%
+    collect()
+
+predictions
+#dim(mypred)
+#mypred[1:10,]
+```
