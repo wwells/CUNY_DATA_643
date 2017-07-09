@@ -6,4 +6,5 @@
 book_ratings.csv
 */rsconnect/*
 *log*
+*.rds
 */.ipynb_checkpoints/*
