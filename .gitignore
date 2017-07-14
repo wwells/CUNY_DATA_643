@@ -7,4 +7,5 @@ book_ratings.csv
 */rsconnect/*
 *log*
 *.rds
+!facBinMatrices.rds
 */.ipynb_checkpoints/*

@@ -5,6 +5,29 @@ getSizeDim <- function(obj){
              dim(obj)[1], ' ', dim(obj)[2]))
 }
 
+getTruncSVD <- function(k, Matrix, varKeep) {
+    # given a K and a sparseM, and the amount of singular values to retain, 
+    # returns a factorized matrix using Truncated SVD method
+    #
+    # Args:
+    #   Matrix: Matrix to factorize
+    #   k:  number of features to use in svds calculation
+    #   keepVar: percent of the singular values to retain
+    #
+    # Returns:
+    #   A list with s,u,v
+    x <- svds(Matrix, k)
+    SMat <- diag(x$d)
+    U <- x$u
+    V <- x$v
+    n <- varKeep * k
+
+    NewSMat <- SMat[1:n, 1:n]
+    NewU <- U[,1:n]
+    NewV <- V[,1:n]
+    (list(s=NewSMat, u=NewU, v=NewV))
+}
+
 GetSVDsRMSE <- function(N_subset, N_sims, SparseMatrix, k, keepVar) {
     # Computes a list of RMSE values of the Truncated SVD to help tuning.  
     # Uses sampling because difficult to manage calc of full RMSE
