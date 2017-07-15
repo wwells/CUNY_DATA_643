@@ -8,4 +8,6 @@ book_ratings.csv
 *log*
 *.rds
 !facBinMatrices.rds
+!clusteredPreds.rds
+!indexBook.rds
 */.ipynb_checkpoints/*
